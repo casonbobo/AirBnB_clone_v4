@@ -18,34 +18,57 @@ $(document).ready(function () {
     });
     const placesSection = document.querySelector('.places');
 
-    fetch('http://0.0.0.0:5000/api/v1/places_search', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({})
-    })
-    .then(response => response.json())
-    .then(data => {
-        data.forEach(place => {
-            const article = document.createElement('article');
-            article.innerHTML = `
-                <div class="title_box">
-                    <h2>${place.name}</h2>
-                    <div class="price_by_night">$${place.price_by_night}</div>
-                </div>
-                <div class="information">
-                    <div class="max_guest">${place.max_guest} Guest${place.max_guest !== 1 ? 's' : ''}</div>
-                    <div class="number_rooms">${place.number_rooms} Bedroom${place.number_rooms !== 1 ? 's' : ''}</div>
-                    <div class="number_bathrooms">${place.number_bathrooms} Bathroom${place.number_bathrooms !== 1 ? 's' : ''}</div>
-                </div>
-                <div class="description">${place.description}</div>
-            `;
-            placesSection.appendChild(article);
-        });
-    })
-    .catch(error => {
-        console.error('Error:', error);
+// Function to display places based on data
+function displayPlaces(data) {
+    for (const place of data) {
+      $.get('http://35f944014d11.7399d2e2.hbtn-cod.io:5000/api/v1/users/' + place.user_id, function (usrData) {
+        const html = `
+          <article>
+            <div class="title_box">
+              <h2>${place.name}</h2>
+              <div class="price_by_night">$${place.price_by_night}</div>
+            </div>
+            <div class="information">
+              <div class="max_guest">${place.max_guest} Guests</div>
+              <div class="number_rooms">${place.number_rooms} Bedrooms</div>
+              <div class="number_bathrooms">${place.number_bathrooms} Bathrooms</div>
+            </div>
+            <div class="user">
+              <b>Owner:</b> ${usrData.first_name} ${usrData.last_name}
+            </div>
+            <div class="description">
+              ${place.description}
+            </div>
+          </article>`;
+        $('.places').append(html);
+      });
+    }
+  }
+  
+  $(document).ready(function () {
+    $.ajax({
+      url: 'http://35f944014d11.7399d2e2.hbtn-cod.io:5000/api/v1/places_search/',
+      type: 'POST',
+      dataType: 'json',
+      contentType: 'application/json',
+      data: JSON.stringify({}),
+      success: function (data) {
+        displayPlaces(data);
+      }
     });
-    
+    $('button').on('click', function () {
+      $('.places > article').remove();
+      const checkedAmenities = {};
+      $.ajax({
+        url: 'http://35f944014d11.7399d2e2.hbtn-cod.io:5001/api/v1/places_search/',
+        type: 'POST',
+        dataType: 'json',
+        contentType: 'application/json',
+        data: JSON.stringify({ amenities: Object.keys(checkedAmenities) }),
+        success: function (data) {
+          displayPlaces(data);
+        }
+      });
+    });
+  });
 });
